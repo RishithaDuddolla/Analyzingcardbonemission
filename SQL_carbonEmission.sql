@@ -1,154 +1,68 @@
--- first, I look over my dataset 
-SELECT * 
-FROM Carbon_Emission
+--creating table--
 
--- then, I check if there are any columns that have null values. 
-SELECT * 
-FROM Carbon_Emission
-WHERE CO2_emission_estimates IS NULL
+CREATE TABLE StateEmissions (
+    State VARCHAR(50),
+    CO2_per_capita DECIMAL(10, 2),
+    CO_per_capita DECIMAL(10, 2),
+    CH4_per_capita DECIMAL(10, 2)
+);
+--inserting information--
 
-SELECT * 
-FROM Carbon_Emission
-WHERE Year IS NULL
+INSERT INTO StateEmissions (State, CO2_per_capita, CO_per_capita, CH4_per_capita) VALUES
+('Andhra Pradesh', 974.17, 27.18, 16.97),
+('Arunachal', 405.90, 17.43, 25.82),
+('Assam', 340.91, 16.63, 21.29),
+('Bihar', 179.01, 8.83, 9.59),
+('Chattisgarh', 1963.88, 17.56, 22.37),
+('Goa', 2662.51, 23.12, 7.62),
+('Gujarat', 1310.58, 24.01, 12.26),
+('Haryana', 1381.86, 17.90, 21.57),
+('Himachal Pradesh', 784.16, 16.98, 18.28),
+('Jammu & Kashmir', 509.03, 15.59, 14.42),
+('Jharkhand', 1403.43, 15.02, 15.39),
+('Karnataka', 888.86, 24.93, 12.20),
+('Kerala', 780.12, 18.29, 4.52),
+('Madhya Pradesh', 656.37, 16.14, 15.15),
+('Maharashtra', 936.70, 23.58, 9.80),
+('Manipur', 379.20, 10.80, 22.63),
+('Meghalaya', 691.53, 12.65, 19.80),
+('Mizoram', 754.71, 15.40, 10.72),
+('Nagaland', 1275.27, 24.13, 29.08),
+('Odhisha', 700.13, 18.40, 19.88),
+('Punjab', 1618.08, 27.90, 33.38),
+('Rajasthan', 793.69, 14.33, 14.18),
+('Sikkim', 711.39, 11.68, 10.04),
+('Tamilnadu', 985.70, 26.60, 10.40),
+('Tripura', 295.64, 17.76, 19.23),
+('Uttar Pradesh', 404.26, 12.40, 12.87),
+('Uttarakhand', 493.01, 14.28, 17.93),
+('West Bengal', 763.13, 22.69, 15.99);
 
-SELECT * 
-FROM Carbon_Emission
-WHERE Series IS NULL
-
-SELECT * 
-FROM Carbon_Emission
-WHERE Value IS NULL
-
--- after making sure that there are no nulls in my dataset, I move to exam the smaller parts of my dataset
--- including the range of the column "Year", distinct value of the column "Series", the range of the column "Value" 
--- with different conditions. 
-
-SELECT DISTINCT Series
-FROM Carbon_Emission
-
-SELECT MIN(Year), MAX(Year)
-FROM Carbon_Emission
-
-SELECT MIN(Value), MAX(Value)
-FROM Carbon_Emission
-WHERE Series = 'Emissions (thousand metric tons of carbon dioxide)'
-
-SELECT MIN(Value), MAX(Value)
-FROM Carbon_Emission
-WHERE Series = 'Emissions per capita (metric tons of carbon dioxide)'
-
--- after checking some smaller parts of my dataset, I find out that the 'Series' column has 2 distinct values.
--- I decide to break these two values into two different tables so that I can work with them easier. 
-
--- firstly, I creat a new table called 'emissions' for the series 'Emissions (thousand metric tons of carbon dioxide)'
-
-CREATE TABLE emissions
-(Country nvarchar(50),
-Year int, 
-Series nvarchar(100), 
-Value float)
-
--- I insert values from the 'Carbon_Emission' table where Series = 'Emissions (thousand metric tons of carbon dioxide)'
--- into the 'emissions' table that I just create.
-
-INSERT INTO emissions
-SELECT * FROM Carbon_Emission
-WHERE Series = 'Emissions (thousand metric tons of carbon dioxide)'
-
-SELECT * 
-FROM emissions
-
--- Next, I creat a new table called 'perCapital' for the series Emissions per capita (metric tons of carbon dioxide) --- 
-CREATE TABLE perCapital
-(Country nvarchar(50),
-Year int, 
-Series nvarchar(100), 
-Value float)
-
--- I insert values from the 'Carbon_Emission' table where Series = 'Emissions per capita (metric tons of carbon dioxide)'
--- into the 'perCapital' table that I just create
-
-INSERT INTO perCapital
-SELECT * FROM Carbon_Emission
-WHERE Series = 'Emissions per capita (metric tons of carbon dioxide)'
-
---Now, I'm going to explore the perCapital table first 
-
-SELECT * 
-FROM perCapital
-
--- I want to find the data about only America. 
-
-SELECT DISTINCT Country
-FROM perCapital
-WHERE COUNTRY LIKE 'U%' -- find countries that start with the letter U since there are many names for America, I'm not sure
--- which one is used in my dataset. 
-
--- next, I find the min and max value of Carbon Emissions per capital in America
-
-SELECT MIN(Value) as min_value, MAX(Value) as Max_value 
-FROM perCapital
-WHERE Country = 'United States of America'
---- The min value is 14.606 and the max value is 20.168
-
-SELECT Year
-FROM perCapital
-WHERE Country = 'United States of America'
-AND Value IN (20.168, 14.606)
---- the year for the max value is 1975 and the year for the min value is 2017. 
-
--- next, I wanted to know the changes of emissions per capital in 2017 compared to the changes of emissions per capital in 1975 --- 
-;WITH value1975 AS 
-(SELECT Country, Value as old_value
-FROM perCapital
-WHERE Year = 1975), 
-value2017 AS 
-(SELECT Country, Value as new_value 
-FROM perCapital
-WHERE Year = 2017)
-
-SELECT DISTINCT perCapital.Country, ROUND((value2017.new_value - value1975.old_value)/value1975.old_value,2) AS changes 
-FROM 
-value1975
-INNER JOIN value2017 ON value1975.Country = value2017.Country
-INNER JOIN perCapital ON value1975.Country = perCapital.Country
-ORDER BY changes DESC
- 
----- Oman is the country that has the highest rate of increasing, which is 16.25. 
---- Dem. People's Rep. Korea has the lowest rate of decreasing, which is -0.84
-
-
--- now, I'm going to with the emissions table
-
-SELECT * 
-FROM emissions
-
--- I want want to know the min and max value of America -- 
-
-SELECT * 
-FROM emissions
-WHERE Country = 'United States of America'
-
-SELECT MAX(Value), Min(Value)
-FROM emissions
-WHERE Country = 'United States of America'
-
-SELECT * 
-FROM emissions
-WHERE Value = 5703220.175 -- 2005 
-OR Value = 4355839.181 -- 1975
-
--- finally, I want to find out which 5 countries have the highest amount of carbon emissions. 
-
-SELECT TOP 5 Country, Sum(Value) as sum_value
-FROM emissions
-GROUP BY Country
-ORDER BY sum_value DESC --China, USA, India, Russia, and Japan. 
-
-
-
-
-
-
+--Find the states with the highest per capita CO2 emissions--
+SELECT State, CO2_per_capita
+FROM StateEmissions
+ORDER BY CO2_per_capita DESC
+LIMIT 5;
+--Find the average per capita emissions for CO2, CO, and CH4--
+SELECT 
+    AVG(CO2_per_capita) AS Avg_CO2_per_capita,
+    AVG(CO_per_capita) AS Avg_CO_per_capita,
+    AVG(CH4_per_capita) AS Avg_CH4_per_capita
+FROM StateEmissions;
+--List states where per capita CH4 emissions are above the average--
+WITH AvgCH4 AS (
+    SELECT AVG(CH4_per_capita) AS Avg_CH4_per_capita
+    FROM StateEmissions
+)
+SELECT State, CH4_per_capita
+FROM StateEmissions, AvgCH4
+WHERE StateEmissions.CH4_per_capita > AvgCH4.Avg_CH4_per_capita;
+--Find the total CO2 emissions for all states combined--
+SELECT SUM(CO2_per_capita) AS Total_CO2_per_capita
+FROM StateEmissions;
+--Get the states with CO emissions higher than a specific threshold, say 20 kg per person--
+SELECT State, CO_per_capita
+FROM StateEmissions
+WHERE CO_per_capita > 20;
 
 
